@@ -80,3 +80,45 @@ FROM Mentions;
 SELECT restaurant_id, name, city
 FROM Restaurant
 WHERE latitude IS NULL OR longitude IS NULL;
+
+-- ----------------------------------------------------------------------------
+-- Statement 06: Insert a New Cuisine
+-- Explanation: Add Peruvian to the list of cuisines so restaurants can be
+--              tagged with it. OR IGNORE keeps cuisine names stored only once.
+-- ----------------------------------------------------------------------------
+INSERT OR IGNORE INTO Cuisine (name)
+VALUES ('Peruvian');
+
+-- ----------------------------------------------------------------------------
+-- Statement 07: Register a New User
+-- Explanation: Create an account for a new user with a salted password hash;
+--              the user_id and created_at values are filled in automatically.
+-- ----------------------------------------------------------------------------
+INSERT OR IGNORE INTO User (username, email, password_hash)
+VALUES ('foodiefay', 'fay@example.com', 'pbkdf2$5a1c$b07d93e6f2');
+
+-- ----------------------------------------------------------------------------
+-- Statement 08: Add a Missing Phone Number
+-- Explanation: Update Smash Bros Burgers (restaurant 5), which was stored
+--              without a phone number, with its contact number.
+-- ----------------------------------------------------------------------------
+UPDATE Restaurant
+SET phone = '323-555-0105'
+WHERE restaurant_id = 5;
+
+-- ----------------------------------------------------------------------------
+-- Statement 09: Fill In Missing Creator Display Names
+-- Explanation: For every creator with no display name, use their handle
+--              without the leading @ so the creator filter never shows a blank.
+-- ----------------------------------------------------------------------------
+UPDATE Creator
+SET display_name = SUBSTR(handle, 2)
+WHERE display_name IS NULL;
+
+-- ----------------------------------------------------------------------------
+-- Statement 10: Delete Low-Confidence Mentions
+-- Explanation: Remove restaurant mentions whose extraction confidence is below
+--              0.60, since they are too unreliable to show to users.
+-- ----------------------------------------------------------------------------
+DELETE FROM Mentions
+WHERE confidence < 0.60;
