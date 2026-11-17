@@ -233,3 +233,79 @@ WHERE note IS NULL
 SELECT restaurant_id, name, city
 FROM Restaurant
 WHERE restaurant_id NOT IN (SELECT restaurant_id FROM SavedRestaurant);
+
+
+-- ============================================================================
+-- SECTION 3: COMPLEX STATEMENTS (Statements 22 to 32)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Statement 22: Creators who talked about an SF restaurant
+-- Explanation: Uses EXISTS to get creators that have at least one video
+--              mentioning a restaurant in San Francisco.
+-- ----------------------------------------------------------------------------
+Select handle, display_name from Creator c
+where exists(select * from Video v, Transcript t, Mentions m, Restaurant r
+    where v.creator_id=c.creator_id and t.video_id =v.video_id
+    and m.transcript_id= t.transcript_id and r.restaurant_id=m.restaurant_id
+    and r.city ='San Francisco');
+
+-- ----------------------------------------------------------------------------
+-- Statement 23: Cuisines no restaurant serves
+-- Explanation: NOT EXISTS checks Serves for each cuisine and keeps the ones
+--              with no restaurant.
+-- ----------------------------------------------------------------------------
+select cuisine_id,name
+from Cuisine
+where not exists (select 1 from Serves where Serves.cuisine_id=Cuisine.cuisine_id);
+
+-- ----------------------------------------------------------------------------
+-- Statement 24: Activity feed for user 1
+-- Explanation: Combines everything user 1 saved and everyone they followed
+--              into one list with UNION ALL, newest first.
+-- ----------------------------------------------------------------------------
+select 'saved' as action, r.name as target, s.saved_at as happened_at
+from SavedRestaurant s, Restaurant r
+where s.restaurant_id=r.restaurant_id and s.user_id= 1
+UNION ALL
+select 'followed', c.handle, f.followed_at from Follows f,Creator c
+where f.creator_id =c.creator_id and f.user_id=1
+order by happened_at desc;
+
+-- ----------------------------------------------------------------------------
+-- Statement 25: Restaurants both @laeatsdaily and @cheapeatsca mentioned
+-- Explanation: Gets the restaurants from creator 1's videos and intersects
+--              with the ones from creator 5's videos.
+-- ----------------------------------------------------------------------------
+select r.restaurant_id, r.name from Restaurant r, Mentions m, Transcript t, Video v
+where r.restaurant_id=m.restaurant_id and m.transcript_id=t.transcript_id
+  and t.video_id=v.video_id and v.creator_id = 1
+intersect
+select r.restaurant_id, r.name from Restaurant r,Mentions m,Transcript t,Video v
+where r.restaurant_id=m.restaurant_id and m.transcript_id=t.transcript_id
+  and t.video_id=v.video_id and v.creator_id =5;
+
+-- ----------------------------------------------------------------------------
+-- Statement 26: Restaurants alston saved that eduardo didnt
+-- Explanation: Takes user 1's saved restaurants and removes the ones user 2
+--              also saved using EXCEPT.
+-- ----------------------------------------------------------------------------
+select r.name from SavedRestaurant s join Restaurant r on r.restaurant_id=s.restaurant_id
+where s.user_id=1
+EXCEPT
+select r.name from SavedRestaurant s join Restaurant r on r.restaurant_id=s.restaurant_id
+where s.user_id = 2;
+
+-- ----------------------------------------------------------------------------
+-- Statement 27: Restaurants mentioned in more than one video
+-- Explanation: A CTE counts mentions and average confidence per restaurant,
+--              then we join it to Restaurant and keep the ones with 2 or more.
+-- ----------------------------------------------------------------------------
+with counts as (
+  select restaurant_id, count(*) as num_mentions, avg(confidence) as avg_conf
+  from Mentions group by restaurant_id
+)
+select r.name, r.city, num_mentions, round(avg_conf,2) as avg_conf
+from counts, Restaurant r
+where r.restaurant_id=counts.restaurant_id and num_mentions>1
+order by num_mentions desc, r.name;
