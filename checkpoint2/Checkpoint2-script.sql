@@ -122,3 +122,96 @@ WHERE display_name IS NULL;
 -- ----------------------------------------------------------------------------
 DELETE FROM Mentions
 WHERE confidence < 0.60;
+
+
+-- ============================================================================
+-- SECTION 2: INTERMEDIATE STATEMENTS (Statements 11 to 21)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Statement 11: Videos with Their Creator and Submitter
+-- Explanation: Join each video to the creator who posted it and the user who
+--              submitted it, listed from the most recent submission.
+-- ----------------------------------------------------------------------------
+SELECT
+    V.video_id,
+    C.handle       AS creator,
+    U.username     AS submitted_by,
+    V.submitted_at
+FROM Video V
+JOIN Creator C ON V.creator_id = C.creator_id
+JOIN User U    ON V.submitted_by = U.user_id
+ORDER BY V.submitted_at DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 12: Restaurants Recommended by Each Creator
+-- Explanation: Follow the chain creator, video, transcript, mention, restaurant
+--              to list which restaurants each creator talked about and where.
+-- ----------------------------------------------------------------------------
+SELECT
+    C.handle   AS creator,
+    R.name     AS restaurant,
+    R.city,
+    M.confidence
+FROM Creator C
+JOIN Video V      ON V.creator_id = C.creator_id
+JOIN Transcript T ON T.video_id = V.video_id
+JOIN Mentions M   ON M.transcript_id = T.transcript_id
+JOIN Restaurant R ON R.restaurant_id = M.restaurant_id
+ORDER BY C.handle, R.name;
+
+-- ----------------------------------------------------------------------------
+-- Statement 13: Number of Restaurants per Cuisine
+-- Explanation: Count how many restaurants serve each cuisine by joining the
+--              Serves relationship to Cuisine and grouping by cuisine.
+-- ----------------------------------------------------------------------------
+SELECT
+    Cu.name                AS cuisine,
+    COUNT(S.restaurant_id) AS restaurant_count
+FROM Cuisine Cu
+JOIN Serves S ON S.cuisine_id = Cu.cuisine_id
+GROUP BY Cu.cuisine_id, Cu.name
+ORDER BY restaurant_count DESC, Cu.name;
+
+-- ----------------------------------------------------------------------------
+-- Statement 14: Most Saved Restaurants (GROUP BY & HAVING)
+-- Explanation: Find the restaurants that at least 3 different users have saved,
+--              with the number of saves and the date of the latest save.
+-- ----------------------------------------------------------------------------
+SELECT
+    R.restaurant_id,
+    R.name,
+    COUNT(SR.user_id) AS times_saved,
+    MAX(SR.saved_at)  AS last_saved_at
+FROM Restaurant R
+JOIN SavedRestaurant SR ON SR.restaurant_id = R.restaurant_id
+GROUP BY R.restaurant_id, R.name
+HAVING COUNT(SR.user_id) >= 3
+ORDER BY times_saved DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 15: Videos Still Waiting for a Transcript (LEFT OUTER JOIN)
+-- Explanation: Left join videos to transcripts and keep the rows with no match
+--              to find submitted videos that have not been transcribed yet.
+-- ----------------------------------------------------------------------------
+SELECT
+    V.video_id,
+    V.tiktok_url,
+    V.submitted_at
+FROM Video V
+LEFT JOIN Transcript T ON T.video_id = V.video_id
+WHERE T.transcript_id IS NULL;
+
+-- ----------------------------------------------------------------------------
+-- Statement 16: Saved-List Size per User (LEFT JOIN & GROUP BY)
+-- Explanation: Count how many restaurants each user has saved, keeping users
+--              with an empty list by using a left join so they show a 0.
+-- ----------------------------------------------------------------------------
+SELECT
+    U.user_id,
+    U.username,
+    COUNT(SR.restaurant_id) AS saved_restaurants
+FROM User U
+LEFT JOIN SavedRestaurant SR ON SR.user_id = U.user_id
+GROUP BY U.user_id, U.username
+ORDER BY saved_restaurants DESC, U.username;
