@@ -43,6 +43,35 @@ The whole app is about 40 lines in one component. Everything else is the stock V
 - **Web Worker.** See the `ponytail:` comment on line 5.
 - **A backend or the OpenAI API.** Running locally is free and private, and it works offline after the first load.
 
+## Checkpoint 2: database and SQL script
+
+Everything for CSE 111 Checkpoint 2 is in `checkpoint2/`
+
+| File | What it is |
+|------|------------|
+| `Checkpoint2-dbase.sqlite3` | The SQLite database with all 10 tables and sample data |
+| `Checkpoint2-script.sql` | 32 SQL statements (10 simple, 11 intermediate, 11 complex) |
+| `schema.sql` | Creates the tables |
+| `seed.sql` | Fills them with sample data (made up, not real restaurants or users) |
+
+To run the script the same way it gets graded:
+
+```
+cd checkpoint2
+sqlite3 Checkpoint2-dbase.sqlite3
+.read Checkpoint2-script.sql
+```
+
+The script has inserts, updates and deletes so it changes the database. To get the original back:
+
+```
+rm Checkpoint2-dbase.sqlite3
+sqlite3 Checkpoint2-dbase.sqlite3 < schema.sql
+sqlite3 Checkpoint2-dbase.sqlite3 < seed.sql
+```
+
+The tables come from the relation spec in `docs/checkpoint1/`. Changes since Checkpoint 1 are listed at the top of the script
+
 ## History of Whisper
 
 | Date | Milestone |
@@ -58,3 +87,4 @@ The whole app is about 40 lines in one component. Everything else is the stock V
 
 - **2026-09-24**: Scaffolded with `npm create vite@latest --template react`. Added `@huggingface/transformers` and a single-page file-upload transcriber in `src/App.jsx`.
 - **2026-09-24**: Moved out of the `tpch` lab repo into its own repo, `foodFriend`. Added the line-by-line code walkthrough to this README.
+- **2026-11-16**: Checkpoint 2. Added the SQLite schema, sample data, database file and the SQL script in `checkpoint2/`
