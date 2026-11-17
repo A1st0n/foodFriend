@@ -9,14 +9,62 @@
 -- SCHEMA MODIFICATIONS SINCE CHECKPOINT 1
 -- ============================================================================
 -- Modifications:
--- 1. [Description of schema modification 1, or None]
+-- 1. No tables or columns were added, removed or renamed. The 10 relations
+--    are the same as Checkpoint 1.
+-- 2. Added UNIQUE on User.username, User.email, Creator.handle,
+--    Video.tiktok_url, Cuisine.name and Restaurant(name, street, city) so the
+--    same link or restaurant is only stored once.
+-- 3. Added CHECK constraints: latitude between -90 and 90, longitude between
+--    -180 and 180, Mentions.confidence between 0 and 1.
+-- 4. Added ON DELETE CASCADE on Transcript.video_id and on the foreign keys
+--    of Mentions, Serves, SavedRestaurant and Follows.
+-- 5. Added defaults: CURRENT_TIMESTAMP for the created_at / submitted_at /
+--    saved_at / followed_at columns, 'en' for Transcript.language and
+--    'whisper-1' for Transcript.model.
+-- 6. Added a view MapPins (Statement 29) and a trigger auto_follow_creator
+--    (Statement 31).
 -- ============================================================================
 
 -- ============================================================================
 -- MEMBER CONTRIBUTIONS SUMMARY (GROUPED AT THE TOP)
 -- ============================================================================
 -- SECTION 1: SIMPLE STATEMENTS
--- Statement 01: [Member 1]: XX%, [Member 2]: XX%
+-- Statement 01: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 02: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 03: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 04: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 05: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 06: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 07: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 08: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 09: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 10: Alston Bravo: 50%, Eduardo Sanchez: 50%
+--
+-- SECTION 2: INTERMEDIATE STATEMENTS
+-- Statement 11: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 12: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 13: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 14: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 15: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 16: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 17: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 18: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 19: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 20: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 21: Alston Bravo: 50%, Eduardo Sanchez: 50%
+--
+-- SECTION 3: COMPLEX STATEMENTS
+-- Statement 22: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 23: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 24: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 25: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 26: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 27: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 28: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 29: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 30: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 31: Alston Bravo: 50%, Eduardo Sanchez: 50%
+-- Statement 32: Alston Bravo: 50%, Eduardo Sanchez: 50%
 -- ============================================================================
 
 PRAGMA foreign_keys = ON;
