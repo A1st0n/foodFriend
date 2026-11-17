@@ -309,3 +309,70 @@ select r.name, r.city, num_mentions, round(avg_conf,2) as avg_conf
 from counts, Restaurant r
 where r.restaurant_id=counts.restaurant_id and num_mentions>1
 order by num_mentions desc, r.name;
+
+-- ----------------------------------------------------------------------------
+-- Statement 28: Rank restaurants in each city by saves
+-- Explanation: Counts saves per restaurant and uses DENSE_RANK partitioned
+--              by city so each city has its own ranking.
+-- ----------------------------------------------------------------------------
+select r.city, r.name, count(s.user_id) as saves,
+   dense_rank() over(partition by r.city order by count(s.user_id) desc) as city_rank
+from Restaurant r left join SavedRestaurant s on s.restaurant_id=r.restaurant_id
+group by r.restaurant_id
+order by r.city,city_rank;
+
+-- ----------------------------------------------------------------------------
+-- Statement 29: View for the map pins
+-- Explanation: Creates a view with only the restaurants that have
+--              coordinates, plus their cuisines and how many times they were
+--              mentioned. This is what the map page reads from.
+-- ----------------------------------------------------------------------------
+drop view if exists MapPins;
+
+create view MapPins as
+select r.restaurant_id, r.name, r.city, r.latitude, r.longitude,
+  (select group_concat(c.name,', ') from Serves s, Cuisine c
+     where s.cuisine_id=c.cuisine_id and s.restaurant_id =r.restaurant_id) as cuisines,
+  (select count(*) from Mentions m where m.restaurant_id= r.restaurant_id) as times_mentioned
+from Restaurant r
+where r.latitude is not null and r.longitude is not null;
+
+-- ----------------------------------------------------------------------------
+-- Statement 30: LA pins from the view
+-- Explanation: Queries the MapPins view for the Los Angeles restaurants,
+--              most mentioned first.
+-- ----------------------------------------------------------------------------
+Select name, cuisines, times_mentioned, latitude, longitude
+from MapPins where city ='Los Angeles'
+order by times_mentioned desc, name;
+
+-- ----------------------------------------------------------------------------
+-- Statement 31: Trigger to auto follow the creator
+-- Explanation: After a user submits a video, this trigger makes them follow
+--              the creator of that video if they dont already.
+-- ----------------------------------------------------------------------------
+drop trigger if exists auto_follow_creator;
+
+create trigger auto_follow_creator
+after insert on Video
+for each row
+begin
+    insert or ignore into Follows(user_id, creator_id, followed_at)
+    values(NEW.submitted_by, NEW.creator_id, NEW.submitted_at);
+end;
+
+-- ----------------------------------------------------------------------------
+-- Statement 32: Confidence breakdown per creator
+-- Explanation: Uses CASE to count how many of each creator's mentions are
+--              high (0.9+), medium, or low (under 0.75) confidence.
+-- ----------------------------------------------------------------------------
+select c.handle,
+  count(case when m.confidence>=0.9 then 1 end) as high,
+  count(case when m.confidence <0.9 and m.confidence>= 0.75 then 1 end) as medium,
+  count(case when m.confidence<0.75 then 1 end) as low,
+  count(m.restaurant_id) as total
+from Creator c
+left join Video v on v.creator_id=c.creator_id
+left join Transcript t on t.video_id =v.video_id
+left join Mentions m on m.transcript_id=t.transcript_id
+group by c.creator_id;
